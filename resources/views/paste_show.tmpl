@@ -10,7 +10,6 @@
 {{ template "highlight_scripts" . }}
     <style>
 {{ template "scrollbar_css" . }}
-        html, body { height: 100%; }
         body { display: flex; flex-direction: column; margin: 0; }
         .hljs { background: transparent !important; padding: 0 !important; }
         #code-block.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
@@ -38,7 +37,7 @@
         </a>
     </div>
 </header>
-<main class="min-h-0 flex-1 overflow-auto bg-[#050505]">
+<main class="scroll-pane bg-[#050505]">
     <pre id="code-block" class="nowrap m-0 p-3 text-sm leading-relaxed"><code id="code" class="hljs">{{ .content }}</code></pre>
 </main>
 {{ template "footer_credit" . }}

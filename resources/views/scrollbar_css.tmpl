@@ -1,7 +1,19 @@
 {{ define "scrollbar_css" }}
         html {
+            height: 100%;
             scrollbar-width: thin;
             scrollbar-color: #333333 #050505;
+        }
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+        .scroll-pane {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            overflow-x: scroll;
+            scrollbar-gutter: stable;
         }
         *::-webkit-scrollbar {
             width: 10px;
