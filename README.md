@@ -1,5 +1,7 @@
 # DataBin
 
+![DataBin — self-hosted paste tool for sharing data](public/og.png)
+
 Lightweight Self-hosted pastebin (Hastebin-compatible API) on Go and Redis.
 
 ## Features
@@ -57,6 +59,7 @@ curl -s -X DELETE http://localhost:3000/documents/abcdef1234
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `APP_URL` | - | Public site URL for Open Graph (e.g. `https://paste.example.com`) |
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
 | `REDIS_PASSWORD` | - | Redis password (`requirepass` in Docker) |
 | `PASTE_TTL_HOURS` | `0` | Expiration; `0` = no expiry |

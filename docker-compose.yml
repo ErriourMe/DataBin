@@ -5,6 +5,7 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       APP_NAME: DataBin
+      APP_URL: http://localhost:${APP_PORT:-3000}
       APP_HOST: 0.0.0.0
       APP_PORT: 3000
       REDIS_HOST: redis

@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ .id }} | {{ .appName }}</title>
+{{ template "head_meta" . }}
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.2/styles/atom-one-dark.min.css">
 {{ template "highlight_scripts" . }}
@@ -17,17 +18,17 @@
 </head>
 <body class="app-shell h-full bg-[#141414] text-gray-200 antialiased">
 <header class="flex flex-shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-[#141414] text-sm">
-    <a href="/" class="font-semibold tracking-wide text-gray-300 hover:text-white">{{ .appName }}</a>
+    <a href="/" class="group inline-flex">{{ template "brand_logo" . }}</a>
     <div class="flex flex-wrap items-center gap-2">
         <label class="flex cursor-pointer select-none items-center gap-1.5 text-gray-500 hover:text-gray-300">
-            <input id="wrap" type="checkbox" class="rounded border-gray-600 bg-[#141414] text-emerald-600 focus:ring-0 focus:ring-offset-0">
+            <input id="wrap" type="checkbox" class="accent-brand rounded border-gray-600 bg-[#141414] focus:ring-0 focus:ring-offset-0">
             <span>Word wrap</span>
         </label>
         <span class="ml-2 inline-flex h-7 items-center px-1 font-mono text-sm text-white">{{ .id }}</span>
         <a href="{{ .rawURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">raw</a>
         <a href="{{ .downloadURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Download</a>
         <button id="copy" type="button" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Copy URL</button>
-        <a href="/" class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600">
+        <a href="/" class="btn-accent inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 overflow-hidden" aria-hidden="true">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
             </svg>

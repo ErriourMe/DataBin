@@ -44,6 +44,9 @@ func main() {
 	h := web.NewHandler(cfg, pastes, version.NewService(), tpl)
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/public/favicon.png", http.StatusPermanentRedirect)
+	})
 	mux.Handle("GET /{$}", http.HandlerFunc(h.New))
 	mux.Handle("POST /documents", http.HandlerFunc(h.Create))
 	mux.Handle("PUT /documents/{id}", http.HandlerFunc(h.Update))

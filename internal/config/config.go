@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	AppName  string
+	AppURL   string
 	AppHost  string
 	AppPort  int
 	Redis    Redis
@@ -31,6 +32,7 @@ type Paste struct {
 func Load() Config {
 	return Config{
 		AppName:   env("APP_NAME", "DataBin"),
+		AppURL:    env("APP_URL", ""),
 		AppHost:   env("APP_HOST", "0.0.0.0"),
 		AppPort:   envInt("APP_PORT", 3000),
 		ViewsDir:  env("VIEWS_DIR", "resources/views"),

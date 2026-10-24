@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ .appName }}</title>
+{{ template "head_meta" . }}
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.2/styles/atom-one-dark.min.css">
 {{ template "highlight_scripts" . }}
@@ -21,10 +22,10 @@
 </head>
 <body class="app-shell h-full bg-[#141414] text-gray-200 antialiased">
 <header class="flex flex-shrink-0 items-center justify-between px-3 py-1.5 bg-[#141414] text-sm">
-    <span class="font-semibold tracking-wide text-gray-300">{{ .appName }}</span>
+    {{ template "brand_logo" . }}
     <div class="flex items-center gap-2">
         <label class="flex cursor-pointer select-none items-center gap-1.5 text-gray-500 hover:text-gray-300">
-            <input id="wrap" type="checkbox" class="rounded border-gray-600 bg-[#141414] text-emerald-600 focus:ring-0 focus:ring-offset-0">
+            <input id="wrap" type="checkbox" class="accent-brand rounded border-gray-600 bg-[#141414] focus:ring-0 focus:ring-offset-0">
             <span>Word wrap</span>
         </label>
         <label class="text-gray-500 hidden sm:inline">Language</label>
@@ -47,7 +48,7 @@
         <button id="preview-toggle" type="button" aria-pressed="false" class="inline-flex h-7 items-center justify-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
             Preview
         </button>
-        <button id="save" type="button" disabled class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-emerald-500">
+        <button id="save" type="button" disabled class="btn-accent inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
                 <polyline points="17 21 17 13 7 13 7 21"/>

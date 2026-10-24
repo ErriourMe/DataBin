@@ -30,7 +30,9 @@ func NewHandler(cfg config.Config, pastes *paste.Service, versions *version.Serv
 }
 
 func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
-	h.render(w, "paste_new.tmpl", h.viewBase())
+	data := h.viewBase(r)
+	data["ogTitle"] = h.cfg.AppName
+	h.render(w, "paste_new.tmpl", data)
 }
 
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
@@ -41,12 +43,13 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := h.viewBase()
+	data := h.viewBase(r)
 	data["id"] = id
 	data["content"] = content
 	data["lang"] = r.URL.Query().Get("lang")
 	data["rawURL"] = "/raw/" + id
 	data["downloadURL"] = "/download/" + id
+	data["ogTitle"] = id + " | " + h.cfg.AppName
 	h.render(w, "paste_show.tmpl", data)
 }
 
@@ -138,20 +141,35 @@ func (h *Handler) Destroy(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.WriteString(w, "OK")
 }
 
-func (h *Handler) viewBase() map[string]any {
+func (h *Handler) viewBase(r *http.Request) map[string]any {
 	now := time.Now()
 	release := h.versions.Current()
+	base := strings.TrimRight(h.appURL(r), "/")
 	data := map[string]any{
 		"appName":         h.cfg.AppName,
 		"appVersion":      release.Version,
 		"appVersionURL":   release.URL,
 		"footerCopyright": footerCopyright(now.Year()),
+		"ogImageURL":      base + "/public/og.png",
 	}
 	if release.UpdateVersion != "" {
 		data["updateVersion"] = release.UpdateVersion
 		data["updateVersionURL"] = release.UpdateURL
 	}
 	return data
+}
+
+func (h *Handler) appURL(r *http.Request) string {
+	if u := strings.TrimSpace(h.cfg.AppURL); u != "" {
+		return strings.TrimRight(u, "/")
+	}
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	} else if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = strings.TrimSpace(strings.Split(proto, ",")[0])
+	}
+	return scheme + "://" + r.Host
 }
 
 func isEmptyPaste(content string) bool {
