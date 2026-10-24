@@ -61,7 +61,7 @@ curl -s -X DELETE http://localhost:3000/documents/abcdef1234
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REDIS_HOST` | `127.0.0.1` | Redis host |
-| `REDIS_PASSWORD` | — | Redis password (`requirepass` in Docker) |
+| `REDIS_PASSWORD` | - | Redis password (`requirepass` in Docker) |
 | `PASTE_TTL_HOURS` | `0` | Expiration; `0` = no expiry |
 | `PASTE_MAX_BYTES` | `2097152` | Max paste size (2 MiB) |
 | `PASTE_KEY_LENGTH` | `10` | Random id length |
