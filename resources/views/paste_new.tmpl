@@ -12,8 +12,9 @@
 {{ template "scrollbar_css" . }}
         #editor { tab-size: 4; }
         #preview code.hljs { padding: 0; background: transparent !important; }
-        #preview.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        #preview.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; width: 100%; }
         #preview.nowrap { white-space: pre; }
+        #preview-col #preview.wrap { width: 100%; max-width: 100%; }
         #editor.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
         #editor.nowrap { white-space: pre; }
     </style>
@@ -56,9 +57,13 @@
         </button>
     </div>
 </header>
-<main id="main-pane" class="app-editor-main p-0">
-    <textarea id="editor" class="app-pane nowrap m-0 w-full resize-none border-0 bg-[#050505] text-gray-200 p-3 font-mono text-sm outline-none" spellcheck="false" placeholder="Paste or type here…"></textarea>
-    <pre id="preview" class="app-pane hidden nowrap m-0 p-3 bg-[#101010] text-sm leading-relaxed"><code class="hljs language-plaintext"></code></pre>
+<main id="main-pane" class="app-editor-main">
+    <div class="app-editor-col">
+        <textarea id="editor" class="app-editor-fill nowrap resize-none border-0 bg-[#050505] text-gray-200 p-3 font-mono text-sm outline-none" spellcheck="false" placeholder="Paste or type here…"></textarea>
+    </div>
+    <div id="preview-col" class="app-editor-col hidden">
+        <pre id="preview" class="app-editor-fill nowrap m-0 bg-[#101010] p-3 text-sm leading-relaxed"><code class="hljs language-plaintext"></code></pre>
+    </div>
 </main>
 <p id="status" class="fixed bottom-3 left-3 text-xs text-gray-600"></p>
 {{ template "footer_credit" . }}
@@ -68,17 +73,18 @@ const editor = document.getElementById('editor');
 const preview = document.getElementById('preview');
 const previewCode = preview.querySelector('code');
 const mainPane = document.getElementById('main-pane');
+const previewCol = document.getElementById('preview-col');
 const previewToggle = document.getElementById('preview-toggle');
 const langSelect = document.getElementById('lang');
 const statusEl = document.getElementById('status');
 const wrapCheck = document.getElementById('wrap');
 
 function isPreviewOpen() {
-    return !preview.classList.contains('hidden');
+    return !previewCol.classList.contains('hidden');
 }
 
 function setPreviewOpen(on) {
-    preview.classList.toggle('hidden', !on);
+    previewCol.classList.toggle('hidden', !on);
     mainPane.classList.toggle('is-split', on);
     previewToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     previewToggle.classList.toggle('bg-[#252525]', on);
