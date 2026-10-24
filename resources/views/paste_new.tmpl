@@ -1,0 +1,150 @@
+{{ define "paste_new.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .appName }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
+{{ template "highlight_scripts" . }}
+    <style>
+{{ template "scrollbar_css" . }}
+        html, body { height: 100%; }
+        body { display: flex; flex-direction: column; margin: 0; }
+        #editor { tab-size: 4; }
+        #preview code.hljs { padding: 0; background: transparent !important; }
+        #preview.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        #preview.nowrap { white-space: pre; }
+        #editor.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+        #editor.nowrap { white-space: pre; overflow-x: auto; }
+    </style>
+</head>
+<body class="h-full bg-[#141414] text-gray-200 antialiased">
+<header class="flex flex-shrink-0 items-center justify-between px-3 py-1.5 bg-[#141414] text-sm">
+    <span class="font-semibold tracking-wide text-gray-300">{{ .appName }}</span>
+    <div class="flex items-center gap-2">
+        <label class="flex cursor-pointer select-none items-center gap-1.5 text-gray-500 hover:text-gray-300">
+            <input id="wrap" type="checkbox" class="rounded border-gray-600 bg-[#141414] text-emerald-600 focus:ring-0 focus:ring-offset-0">
+            <span>Word wrap</span>
+        </label>
+        <label class="text-gray-500 hidden sm:inline">Language</label>
+        <select id="lang" class="h-7 bg-[#1c1c1c] border border-[#2a2a2a] rounded px-2 text-sm text-gray-300">
+            <option value="">auto</option>
+            <option value="plaintext">plaintext</option>
+            <option value="go">Go</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="python">Python</option>
+            <option value="rust">Rust</option>
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+            <option value="bash">Bash</option>
+            <option value="sql">SQL</option>
+            <option value="xml">XML</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+        </select>
+        <button id="preview-toggle" type="button" aria-pressed="false" class="inline-flex h-7 items-center justify-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            Preview
+        </button>
+        <button id="save" type="button" class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save
+        </button>
+    </div>
+</header>
+<main id="main-pane" class="min-h-0 flex-1 grid grid-cols-1">
+    <textarea id="editor" class="nowrap w-full h-full resize-none bg-[#050505] text-gray-200 p-3 font-mono text-sm outline-none" spellcheck="false" placeholder="Paste or type here…"></textarea>
+    <pre id="preview" class="hidden nowrap overflow-auto p-3 m-0 h-full min-h-0 bg-[#050505] text-sm leading-relaxed"><code class="hljs language-plaintext"></code></pre>
+</main>
+<p id="status" class="fixed bottom-3 left-3 text-xs text-gray-600"></p>
+{{ template "footer_credit" . }}
+{{ template "highlight_fn" . }}
+<script>
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+const previewCode = preview.querySelector('code');
+const mainPane = document.getElementById('main-pane');
+const previewToggle = document.getElementById('preview-toggle');
+const langSelect = document.getElementById('lang');
+const statusEl = document.getElementById('status');
+const wrapCheck = document.getElementById('wrap');
+
+function isPreviewOpen() {
+    return !preview.classList.contains('hidden');
+}
+
+function setPreviewOpen(on) {
+    preview.classList.toggle('hidden', !on);
+    mainPane.classList.toggle('lg:grid-cols-2', on);
+    previewToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    previewToggle.classList.toggle('bg-[#252525]', on);
+    previewToggle.classList.toggle('text-white', on);
+    previewToggle.classList.toggle('text-gray-300', !on);
+    try { localStorage.setItem('databin-preview', on ? '1' : '0'); } catch (_) {}
+    if (on) refreshPreview();
+}
+
+previewToggle.addEventListener('click', () => setPreviewOpen(!isPreviewOpen()));
+
+setPreviewOpen((function () {
+    try { return localStorage.getItem('databin-preview') === '1'; } catch (_) { return false; }
+})());
+
+function applyWrap(on) {
+    [editor, preview].forEach((el) => {
+        el.classList.toggle('wrap', on);
+        el.classList.toggle('nowrap', !on);
+    });
+    try { localStorage.setItem('databin-wrap', on ? '1' : '0'); } catch (_) {}
+}
+
+wrapCheck.checked = (function () {
+    try { return localStorage.getItem('databin-wrap') === '1'; } catch (_) { return false; }
+})();
+applyWrap(wrapCheck.checked);
+wrapCheck.addEventListener('change', () => applyWrap(wrapCheck.checked));
+
+function refreshPreview() {
+    databinHighlight(previewCode, editor.value, langSelect.value);
+}
+
+editor.addEventListener('input', () => { if (isPreviewOpen()) refreshPreview(); });
+langSelect.addEventListener('change', () => { if (isPreviewOpen()) refreshPreview(); });
+
+document.getElementById('save').addEventListener('click', async () => {
+    statusEl.textContent = 'Saving…';
+    try {
+        const res = await fetch('/documents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            body: editor.value
+        });
+        const key = (await res.text()).trim();
+        if (!res.ok) {
+            statusEl.textContent = key || 'Save failed';
+            return;
+        }
+        const lang = langSelect.value;
+        const q = lang ? ('?lang=' + encodeURIComponent(lang)) : '';
+        window.location.href = '/' + key + q;
+    } catch (e) {
+        statusEl.textContent = 'Network error';
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('save').click();
+    }
+});
+</script>
+</body>
+</html>
+{{ end }}

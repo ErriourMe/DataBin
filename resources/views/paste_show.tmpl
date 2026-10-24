@@ -1,0 +1,77 @@
+{{ define "paste_show.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .id }} — {{ .appName }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
+{{ template "highlight_scripts" . }}
+    <style>
+{{ template "scrollbar_css" . }}
+        html, body { height: 100%; }
+        body { display: flex; flex-direction: column; margin: 0; }
+        .hljs { background: transparent !important; padding: 0 !important; }
+        #code-block.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+        #code-block.nowrap { white-space: pre; }
+    </style>
+</head>
+<body class="h-full bg-[#141414] text-gray-200 antialiased">
+<header class="flex flex-shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-[#141414] text-sm">
+    <a href="/" class="font-semibold tracking-wide text-gray-300 hover:text-white">{{ .appName }}</a>
+    <div class="flex flex-wrap items-center gap-2">
+        <label class="flex cursor-pointer select-none items-center gap-1.5 text-gray-500 hover:text-gray-300">
+            <input id="wrap" type="checkbox" class="rounded border-gray-600 bg-[#141414] text-emerald-600 focus:ring-0 focus:ring-offset-0">
+            <span>Word wrap</span>
+        </label>
+        <span class="ml-2 inline-flex h-7 items-center px-1 font-mono text-sm text-white">{{ .id }}</span>
+        <a href="{{ .rawURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">raw</a>
+        <a href="{{ .downloadURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Download</a>
+        <button id="copy" type="button" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Copy URL</button>
+        <a href="/" class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5a2.121 2.121 0 013-3z"/>
+            </svg>
+            New
+        </a>
+    </div>
+</header>
+<main class="min-h-0 flex-1 overflow-auto bg-[#050505]">
+    <pre id="code-block" class="nowrap m-0 p-3 text-sm leading-relaxed"><code id="code" class="hljs">{{ .content }}</code></pre>
+</main>
+{{ template "footer_credit" . }}
+{{ template "highlight_fn" . }}
+<script>
+const lang = {{ if .lang }}"{{ .lang }}"{{ else }}""{{ end }};
+const code = document.getElementById('code');
+const codeBlock = document.getElementById('code-block');
+const wrapCheck = document.getElementById('wrap');
+
+databinHighlight(code, null, lang);
+
+function applyWrap(on) {
+    codeBlock.classList.toggle('wrap', on);
+    codeBlock.classList.toggle('nowrap', !on);
+    try { localStorage.setItem('databin-wrap', on ? '1' : '0'); } catch (_) {}
+}
+
+wrapCheck.checked = (function () {
+    try { return localStorage.getItem('databin-wrap') === '1'; } catch (_) { return false; }
+})();
+applyWrap(wrapCheck.checked);
+wrapCheck.addEventListener('change', () => applyWrap(wrapCheck.checked));
+
+document.getElementById('copy').addEventListener('click', async () => {
+    const url = window.location.origin + window.location.pathname;
+    try {
+        await navigator.clipboard.writeText(url);
+        document.getElementById('copy').textContent = 'Copied';
+        setTimeout(() => { document.getElementById('copy').textContent = 'Copy URL'; }, 1500);
+    } catch (_) {}
+});
+</script>
+</body>
+</html>
+{{ end }}

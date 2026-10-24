@@ -1,0 +1,24 @@
+{{ define "scrollbar_css" }}
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: #333333 #050505;
+        }
+        *::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        *::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 5px;
+            border: 2px solid #050505;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+        *::-webkit-scrollbar-corner {
+            background: #050505;
+        }
+{{ end }}
