@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:8.2.1-alpine
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
     command:

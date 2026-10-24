@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27.3-alpine AS builder
 
 ENV CGO_ENABLED=0 \
     GO111MODULE=on
@@ -9,7 +9,7 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags "-s -w" -o main .
 
-FROM alpine:3.21
+FROM alpine:3.22.2
 
 RUN apk add --no-cache ca-certificates tzdata
 
