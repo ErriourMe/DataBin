@@ -5,22 +5,36 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"goravel/app/facades"
+	"golang.org/x/mod/semver"
+)
+
+const (
+	versionFile    = "version.txt"
+	githubRepo     = "ErriourMe/DataBin"
+	defaultVersion = "dev"
+	releaseCache   = 60 * time.Minute
 )
 
 type ReleaseInfo struct {
-	Version string
-	URL     string
+	Version       string
+	URL           string
+	UpdateVersion string
+	UpdateURL     string
 }
 
 type VersionService struct {
-	mu      sync.Mutex
-	cached  ReleaseInfo
-	expires time.Time
+	once      sync.Once
+	installed string
+
+	mu            sync.Mutex
+	latestTag     string
+	latestHTMLURL string
+	latestExpires time.Time
 }
 
 func NewVersionService() *VersionService {
@@ -28,70 +42,91 @@ func NewVersionService() *VersionService {
 }
 
 func (s *VersionService) Current() ReleaseInfo {
+	s.once.Do(func() {
+		s.installed = readVersionFile()
+	})
+
+	info := ReleaseInfo{
+		Version: stripVPrefix(s.installed),
+		URL:     releaseURL(s.installed),
+	}
+
+	if updateTag, updateURL, ok := s.newerReleaseThan(s.installed); ok {
+		info.UpdateVersion = stripVPrefix(updateTag)
+		info.UpdateURL = updateURL
+	}
+
+	return info
+}
+
+func (s *VersionService) newerReleaseThan(installed string) (tag string, htmlURL string, ok bool) {
+	latestTag, latestURL, found := s.fetchLatestRelease()
+	if !found {
+		return "", "", false
+	}
+
+	installedSemver := semverTag(installed)
+	latestSemver := semverTag(latestTag)
+	if !semver.IsValid(installedSemver) || !semver.IsValid(latestSemver) {
+		return "", "", false
+	}
+	if semver.Compare(installedSemver, latestSemver) >= 0 {
+		return "", "", false
+	}
+
+	if latestURL == "" {
+		latestURL = releaseURL(latestTag)
+	}
+	return latestTag, latestURL, true
+}
+
+func (s *VersionService) fetchLatestRelease() (tagName string, htmlURL string, ok bool) {
 	s.mu.Lock()
-	if s.cached.Version != "" && time.Now().Before(s.expires) {
-		info := s.cached
+	if s.latestTag != "" && time.Now().Before(s.latestExpires) {
+		tagName, htmlURL = s.latestTag, s.latestHTMLURL
 		s.mu.Unlock()
-		return info
+		return tagName, htmlURL, true
 	}
 	s.mu.Unlock()
 
-	if info, ok := s.fetchLatestRelease(); ok {
-		s.mu.Lock()
-		s.cached = info
-		s.expires = time.Now().Add(s.cacheTTL())
-		s.mu.Unlock()
-		return info
+	tagName, htmlURL, fetched := s.fetchLatestReleaseFromGitHub()
+	if !fetched {
+		return "", "", false
 	}
 
-	return s.fallbackRelease()
+	s.mu.Lock()
+	s.latestTag = tagName
+	s.latestHTMLURL = htmlURL
+	s.latestExpires = time.Now().Add(releaseCache)
+	s.mu.Unlock()
+
+	return tagName, htmlURL, true
 }
 
-func (s *VersionService) fallbackRelease() ReleaseInfo {
-	return ReleaseInfo{
-		Version: facades.Config().GetString("app.version", "dev"),
-		URL:     s.releasesPageURL(),
-	}
-}
-
-func (s *VersionService) releasesPageURL() string {
-	repo := facades.Config().GetString("github.repo", "ErriourMe/DataBin")
-	return fmt.Sprintf("https://github.com/%s/releases", repo)
-}
-
-func (s *VersionService) cacheTTL() time.Duration {
-	mins := facades.Config().GetInt("github.release_cache_mins", 60)
-	if mins < 1 {
-		mins = 1
-	}
-	return time.Duration(mins) * time.Minute
-}
-
-func (s *VersionService) fetchLatestRelease() (ReleaseInfo, bool) {
-	repo := facades.Config().GetString("github.repo", "ErriourMe/DataBin")
-	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo)
+func (s *VersionService) fetchLatestReleaseFromGitHub() (tagName string, htmlURL string, ok bool) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", githubRepo)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return ReleaseInfo{}, false
+		return "", "", false
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", facades.Config().GetString("app.name", "DataBin"))
+	req.Header.Set("User-Agent", "DataBin")
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return ReleaseInfo{}, false
+		return "", "", false
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return ReleaseInfo{}, false
+		return "", "", false
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return ReleaseInfo{}, false
+		return "", "", false
 	}
 
 	var payload struct {
@@ -99,29 +134,55 @@ func (s *VersionService) fetchLatestRelease() (ReleaseInfo, bool) {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := json.Unmarshal(body, &payload); err != nil {
-		return ReleaseInfo{}, false
+		return "", "", false
 	}
 
-	version := normalizeReleaseTag(payload.TagName)
-	if version == "" {
-		return ReleaseInfo{}, false
+	tagName = strings.TrimSpace(payload.TagName)
+	if tagName == "" {
+		return "", "", false
 	}
 
-	releaseURL := strings.TrimSpace(payload.HTMLURL)
-	if releaseURL == "" {
-		releaseURL = s.releasesPageURL()
-	}
-
-	return ReleaseInfo{
-		Version: version,
-		URL:     releaseURL,
-	}, true
+	return tagName, strings.TrimSpace(payload.HTMLURL), true
 }
 
-func normalizeReleaseTag(tag string) string {
-	tag = strings.TrimSpace(tag)
-	if tag == "" {
+func readVersionFile() string {
+	data, err := os.ReadFile(versionFile)
+	if err != nil {
+		return defaultVersion
+	}
+	version := strings.TrimSpace(string(data))
+	if version == "" {
+		return defaultVersion
+	}
+	return version
+}
+
+func stripVPrefix(version string) string {
+	return strings.TrimPrefix(strings.TrimSpace(version), "v")
+}
+
+func semverTag(version string) string {
+	version = strings.TrimSpace(version)
+	if version == "" {
 		return ""
 	}
-	return strings.TrimPrefix(tag, "v")
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
+	if semver.IsValid(version) {
+		return version
+	}
+	return ""
+}
+
+func releaseURL(version string) string {
+	version = strings.TrimSpace(version)
+	if version == "" || stripVPrefix(version) == defaultVersion {
+		return fmt.Sprintf("https://github.com/%s/releases", githubRepo)
+	}
+	tag := version
+	if !strings.HasPrefix(tag, "v") {
+		tag = "v" + tag
+	}
+	return fmt.Sprintf("https://github.com/%s/releases/tag/%s", githubRepo, tag)
 }

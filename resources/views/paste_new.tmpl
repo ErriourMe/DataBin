@@ -10,8 +10,7 @@
 {{ template "highlight_scripts" . }}
     <style>
 {{ template "scrollbar_css" . }}
-        body { display: flex; flex-direction: column; margin: 0; }
-        #editor { tab-size: 4; min-height: 0; }
+        #editor { tab-size: 4; }
         #preview code.hljs { padding: 0; background: transparent !important; }
         #preview.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
         #preview.nowrap { white-space: pre; }
@@ -19,7 +18,7 @@
         #editor.nowrap { white-space: pre; }
     </style>
 </head>
-<body class="h-full bg-[#141414] text-gray-200 antialiased">
+<body class="app-shell h-full bg-[#141414] text-gray-200 antialiased">
 <header class="flex flex-shrink-0 items-center justify-between px-3 py-1.5 bg-[#141414] text-sm">
     <span class="font-semibold tracking-wide text-gray-300">{{ .appName }}</span>
     <div class="flex items-center gap-2">
@@ -57,9 +56,9 @@
         </button>
     </div>
 </header>
-<main id="main-pane" class="grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden">
-    <textarea id="editor" class="scroll-pane nowrap m-0 w-full resize-none bg-[#050505] text-gray-200 p-3 font-mono text-sm outline-none" spellcheck="false" placeholder="Paste or type here…"></textarea>
-    <pre id="preview" class="scroll-pane hidden nowrap m-0 p-3 bg-[#050505] text-sm leading-relaxed"><code class="hljs language-plaintext"></code></pre>
+<main id="main-pane" class="app-editor-main p-0">
+    <textarea id="editor" class="app-pane nowrap m-0 w-full resize-none border-0 bg-[#050505] text-gray-200 p-3 font-mono text-sm outline-none" spellcheck="false" placeholder="Paste or type here…"></textarea>
+    <pre id="preview" class="app-pane hidden nowrap m-0 p-3 bg-[#101010] text-sm leading-relaxed"><code class="hljs language-plaintext"></code></pre>
 </main>
 <p id="status" class="fixed bottom-3 left-3 text-xs text-gray-600"></p>
 {{ template "footer_credit" . }}
@@ -80,7 +79,7 @@ function isPreviewOpen() {
 
 function setPreviewOpen(on) {
     preview.classList.toggle('hidden', !on);
-    mainPane.classList.toggle('lg:grid-cols-2', on);
+    mainPane.classList.toggle('is-split', on);
     previewToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     previewToggle.classList.toggle('bg-[#252525]', on);
     previewToggle.classList.toggle('text-white', on);

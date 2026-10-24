@@ -32,12 +32,17 @@ func (c *PasteController) New(ctx frameworkhttp.Context) frameworkhttp.Response 
 func (c *PasteController) viewBase() map[string]any {
 	now := time.Now()
 	release := c.versions.Current()
-	return map[string]any{
+	data := map[string]any{
 		"appName":         facades.Config().GetString("app.name", "DataBin"),
 		"appVersion":      release.Version,
 		"appVersionURL":   release.URL,
 		"footerCopyright": footerCopyright(now.Year()),
 	}
+	if release.UpdateVersion != "" {
+		data["updateVersion"] = release.UpdateVersion
+		data["updateVersionURL"] = release.UpdateURL
+	}
+	return data
 }
 
 func footerCopyright(year int) string {

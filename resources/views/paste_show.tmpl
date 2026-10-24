@@ -10,13 +10,12 @@
 {{ template "highlight_scripts" . }}
     <style>
 {{ template "scrollbar_css" . }}
-        body { display: flex; flex-direction: column; margin: 0; }
         .hljs { background: transparent !important; padding: 0 !important; }
         #code-block.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
         #code-block.nowrap { white-space: pre; }
     </style>
 </head>
-<body class="h-full bg-[#141414] text-gray-200 antialiased">
+<body class="app-shell h-full bg-[#141414] text-gray-200 antialiased">
 <header class="flex flex-shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-[#141414] text-sm">
     <a href="/" class="font-semibold tracking-wide text-gray-300 hover:text-white">{{ .appName }}</a>
     <div class="flex flex-wrap items-center gap-2">
@@ -37,7 +36,7 @@
         </a>
     </div>
 </header>
-<main class="scroll-pane bg-[#050505]">
+<main class="app-scroll bg-[#050505]">
     <pre id="code-block" class="nowrap m-0 p-3 text-sm leading-relaxed"><code id="code" class="hljs">{{ .content }}</code></pre>
 </main>
 {{ template "footer_credit" . }}

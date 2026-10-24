@@ -16,6 +16,7 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /www
 
 COPY --from=builder /build/main /www/main
+COPY --from=builder /build/version.txt /www/version.txt
 COPY --from=builder /build/public/ /www/public/
 COPY --from=builder /build/resources/ /www/resources/
 
