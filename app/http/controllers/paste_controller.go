@@ -31,9 +31,11 @@ func (c *PasteController) New(ctx frameworkhttp.Context) frameworkhttp.Response 
 
 func (c *PasteController) viewBase() map[string]any {
 	now := time.Now()
+	release := c.versions.Current()
 	return map[string]any{
 		"appName":         facades.Config().GetString("app.name", "DataBin"),
-		"appVersion":      c.versions.Current(),
+		"appVersion":      release.Version,
+		"appVersionURL":   release.URL,
 		"footerCopyright": footerCopyright(now.Year()),
 	}
 }
