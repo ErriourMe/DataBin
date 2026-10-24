@@ -18,6 +18,8 @@ func init() {
 		// framework needs to place the application's name in a notification or
 		// any other location as required by the application or its packages.
 		"name": config.Env("APP_NAME", "DataBin"),
+		// Fallback when GitHub Releases API is unavailable.
+		"version": "dev",
 
 		// Application Environment
 		//

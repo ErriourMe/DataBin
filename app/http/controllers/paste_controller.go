@@ -14,23 +14,26 @@ import (
 )
 
 type PasteController struct {
-	pastes *services.PasteService
+	pastes   *services.PasteService
+	versions *services.VersionService
 }
 
 func NewPasteController() *PasteController {
 	return &PasteController{
-		pastes: services.NewPasteService(),
+		pastes:   services.NewPasteService(),
+		versions: services.NewVersionService(),
 	}
 }
 
 func (c *PasteController) New(ctx frameworkhttp.Context) frameworkhttp.Response {
-	return ctx.Response().View().Make("paste_new.tmpl", viewBase())
+	return ctx.Response().View().Make("paste_new.tmpl", c.viewBase())
 }
 
-func viewBase() map[string]any {
+func (c *PasteController) viewBase() map[string]any {
 	now := time.Now()
 	return map[string]any{
 		"appName":         facades.Config().GetString("app.name", "DataBin"),
+		"appVersion":      c.versions.Current(),
 		"footerCopyright": footerCopyright(now.Year()),
 	}
 }
@@ -51,7 +54,7 @@ func (c *PasteController) Show(ctx frameworkhttp.Context) frameworkhttp.Response
 	}
 
 	lang := ctx.Request().Query("lang", "")
-	data := viewBase()
+	data := c.viewBase()
 	data["id"] = id
 	data["content"] = content
 	data["lang"] = lang
