@@ -4,7 +4,7 @@ COMPOSE_LOCAL ?= docker-compose.local.yml
 IMAGE ?= erriour/databin
 VERSION := $(shell sed 's/^[[:space:]]*//;s/[[:space:]]*$$//' version.txt)
 
-.PHONY: help env deploy up down logs pull restart local local-down redis dev key publish
+.PHONY: help env deploy up down logs pull restart local local-down redis dev publish
 
 help:
 	@echo "Production:"
@@ -19,7 +19,6 @@ help:
 	@echo ""
 	@echo "Go on host:"
 	@echo "  make redis    redis only"
-	@echo "  make key      generate APP_KEY"
 	@echo "  make dev      run app"
 	@echo ""
 	@echo "Maintainer:"
@@ -52,9 +51,6 @@ local-down:
 
 redis: env
 	$(COMPOSE) -f $(COMPOSE_FILE) up redis -d
-
-key:
-	go run . artisan key:generate
 
 dev:
 	go run .

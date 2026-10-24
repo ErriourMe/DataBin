@@ -7,20 +7,15 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       APP_NAME: DataBin
-      APP_ENV: production
-      APP_DEBUG: "false"
       APP_HOST: 0.0.0.0
       APP_PORT: 3000
-      APP_URL: http://localhost:${APP_PORT:-3000}
-      APP_KEY: ${APP_KEY:-12345678901234567890123456789012}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
       REDIS_DB: 0
-      CACHE_STORE: redis
       PASTE_TTL_HOURS: ${PASTE_TTL_HOURS:-0}
       PASTE_MAX_BYTES: ${PASTE_MAX_BYTES:-2097152}
-      HTTP_BODY_LIMIT: ${PASTE_MAX_BYTES:-2097152}
+      PASTE_KEY_LENGTH: ${PASTE_KEY_LENGTH:-10}
     depends_on:
       redis:
         condition: service_healthy

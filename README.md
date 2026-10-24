@@ -1,6 +1,6 @@
 # DataBin
 
-Self-hosted pastebin (Hastebin-compatible API) on Go, Goravel and Redis.
+Lightweight Self-hosted pastebin (Hastebin-compatible API) on Go and Redis.
 
 ## Features
 
@@ -22,7 +22,7 @@ Open http://localhost:3000
 **Go on the host:**
 
 ```bash
-make env && make key
+make env
 make local    # or: make redis && make dev
 ```
 

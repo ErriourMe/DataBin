@@ -1,4 +1,4 @@
-package services
+package version
 
 import (
 	"encoding/json"
@@ -27,7 +27,7 @@ type ReleaseInfo struct {
 	UpdateURL     string
 }
 
-type VersionService struct {
+type Service struct {
 	once      sync.Once
 	installed string
 
@@ -37,11 +37,11 @@ type VersionService struct {
 	latestExpires time.Time
 }
 
-func NewVersionService() *VersionService {
-	return &VersionService{}
+func NewService() *Service {
+	return &Service{}
 }
 
-func (s *VersionService) Current() ReleaseInfo {
+func (s *Service) Current() ReleaseInfo {
 	s.once.Do(func() {
 		s.installed = readVersionFile()
 	})
@@ -59,7 +59,7 @@ func (s *VersionService) Current() ReleaseInfo {
 	return info
 }
 
-func (s *VersionService) newerReleaseThan(installed string) (tag string, htmlURL string, ok bool) {
+func (s *Service) newerReleaseThan(installed string) (tag string, htmlURL string, ok bool) {
 	latestTag, latestURL, found := s.fetchLatestRelease()
 	if !found {
 		return "", "", false
@@ -80,7 +80,7 @@ func (s *VersionService) newerReleaseThan(installed string) (tag string, htmlURL
 	return latestTag, latestURL, true
 }
 
-func (s *VersionService) fetchLatestRelease() (tagName string, htmlURL string, ok bool) {
+func (s *Service) fetchLatestRelease() (tagName string, htmlURL string, ok bool) {
 	s.mu.Lock()
 	if s.latestTag != "" && time.Now().Before(s.latestExpires) {
 		tagName, htmlURL = s.latestTag, s.latestHTMLURL
@@ -103,7 +103,7 @@ func (s *VersionService) fetchLatestRelease() (tagName string, htmlURL string, o
 	return tagName, htmlURL, true
 }
 
-func (s *VersionService) fetchLatestReleaseFromGitHub() (tagName string, htmlURL string, ok bool) {
+func (s *Service) fetchLatestReleaseFromGitHub() (tagName string, htmlURL string, ok bool) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", githubRepo)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
