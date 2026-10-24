@@ -12,24 +12,21 @@ Self-hosted pastebin (Hastebin-compatible API) on Go, Goravel and Redis.
 ## Quick start (Docker)
 
 ```bash
-cp .env.example .env
-# Set REDIS_PASSWORD in .env (used by app and redis service)
-# Generate APP_KEY: go run . artisan key:generate
-docker compose up --build -d
+make env && make deploy
 ```
 
 Open http://localhost:3000
 
-## Local development
+## Start from local version
+
+**Go on the host:**
 
 ```bash
-cp .env.example .env
-go run . artisan key:generate
-# Start Redis (e.g. docker compose up redis -d)
-go run .
+make env && make key
+make local    # or: make redis && make dev
 ```
 
-## API (Hastebin compatible)
+## API endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|

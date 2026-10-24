@@ -1,7 +1,6 @@
 services:
   app:
-    build:
-      context: .
+    image: erriour/databin:latest
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
