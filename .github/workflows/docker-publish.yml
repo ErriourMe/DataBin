@@ -15,10 +15,15 @@ jobs:
       - name: Resolve image tags
         id: tags
         run: |
+          normalize() {
+            local raw="$1"
+            raw="${raw#v}"
+            echo "v${raw}"
+          }
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            ver="${GITHUB_REF#refs/tags/}"
+            ver="$(normalize "${GITHUB_REF#refs/tags/}")"
           else
-            ver="v$(tr -d ' \r\n' < version.txt)"
+            ver="$(normalize "$(tr -d ' \r\n' < version.txt)")"
           fi
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
           echo "Publishing erriour/databin:latest and erriour/databin:${ver}"
