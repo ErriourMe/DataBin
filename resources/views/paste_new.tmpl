@@ -47,7 +47,7 @@
         <button id="preview-toggle" type="button" aria-pressed="false" class="inline-flex h-7 items-center justify-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
             Preview
         </button>
-        <button id="save" type="button" class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600">
+        <button id="save" type="button" disabled class="inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium bg-emerald-500 text-white hover:bg-emerald-400 active:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-emerald-500">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
                 <polyline points="17 21 17 13 7 13 7 21"/>
@@ -78,6 +78,14 @@ const previewToggle = document.getElementById('preview-toggle');
 const langSelect = document.getElementById('lang');
 const statusEl = document.getElementById('status');
 const wrapCheck = document.getElementById('wrap');
+const saveBtn = document.getElementById('save');
+
+function syncSaveButton() {
+    const canSave = editor.value.trim().length > 0;
+    saveBtn.disabled = !canSave;
+}
+
+syncSaveButton();
 
 function isPreviewOpen() {
     return !previewCol.classList.contains('hidden');
@@ -118,10 +126,14 @@ function refreshPreview() {
     databinHighlight(previewCode, editor.value, langSelect.value);
 }
 
-editor.addEventListener('input', () => { if (isPreviewOpen()) refreshPreview(); });
+editor.addEventListener('input', () => {
+    syncSaveButton();
+    if (isPreviewOpen()) refreshPreview();
+});
 langSelect.addEventListener('change', () => { if (isPreviewOpen()) refreshPreview(); });
 
-document.getElementById('save').addEventListener('click', async () => {
+saveBtn.addEventListener('click', async () => {
+    if (saveBtn.disabled) return;
     statusEl.textContent = 'Saving…';
     try {
         const res = await fetch('/documents', {
@@ -145,7 +157,7 @@ document.getElementById('save').addEventListener('click', async () => {
 document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        document.getElementById('save').click();
+        if (!saveBtn.disabled) saveBtn.click();
     }
 });
 </script>

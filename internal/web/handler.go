@@ -80,6 +80,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Paste too large", http.StatusRequestEntityTooLarge)
 		return
 	}
+	if isEmptyPaste(body) {
+		http.Error(w, "Paste is empty", http.StatusBadRequest)
+		return
+	}
 
 	id, err := h.pastes.Store(r.Context(), body)
 	if err != nil {
@@ -100,6 +104,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	body, err := readBody(r, h.cfg.Paste.MaxBytes)
 	if err != nil {
 		http.Error(w, "Paste too large", http.StatusRequestEntityTooLarge)
+		return
+	}
+	if isEmptyPaste(body) {
+		http.Error(w, "Paste is empty", http.StatusBadRequest)
 		return
 	}
 
@@ -144,6 +152,10 @@ func (h *Handler) viewBase() map[string]any {
 		data["updateVersionURL"] = release.UpdateURL
 	}
 	return data
+}
+
+func isEmptyPaste(content string) bool {
+	return strings.TrimSpace(content) == ""
 }
 
 func footerCopyright(year int) string {
