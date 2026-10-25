@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"databin/internal/config"
+	"databin/internal/geoip"
 	"databin/internal/paste"
 	"databin/internal/version"
 	"databin/internal/web"
@@ -40,6 +41,15 @@ func main() {
 		log.Fatalf("templates: %v", err)
 	}
 
+	geoResolver, err := geoip.Open(cfg.GeoIPDBPath)
+	if err != nil {
+		log.Fatalf("geoip: %v", err)
+	}
+	geoip.SetDefault(geoResolver)
+	if geoResolver != nil {
+		defer geoResolver.Close()
+	}
+
 	pastes := paste.NewService(rdb, cfg.Paste)
 	h := web.NewHandler(cfg, pastes, version.NewService(), tpl)
 
@@ -48,11 +58,14 @@ func main() {
 		http.Redirect(w, r, "/public/favicon.png", http.StatusPermanentRedirect)
 	})
 	mux.Handle("GET /{$}", http.HandlerFunc(h.New))
-	mux.Handle("POST /documents", http.HandlerFunc(h.Create))
+	postLimit := web.NewPostRateLimiter(rdb, cfg.RateLimit.PostPerMinute)
+	mux.Handle("POST /documents", postLimit.Middleware(http.HandlerFunc(h.Create)))
 	mux.Handle("PUT /documents/{id}", http.HandlerFunc(h.Update))
 	mux.Handle("DELETE /documents/{id}", http.HandlerFunc(h.Destroy))
+	mux.Handle("GET /documents/{id}/stats", http.HandlerFunc(h.DocumentStats))
 	mux.Handle("GET /raw/{id}", http.HandlerFunc(h.Raw))
 	mux.Handle("GET /download/{id}", http.HandlerFunc(h.Download))
+	mux.Handle("POST /{id}", http.HandlerFunc(h.Unlock))
 	mux.Handle("GET /{id}", http.HandlerFunc(h.Show))
 	if info, err := os.Stat(cfg.PublicDir); err == nil && info.IsDir() {
 		mux.Handle("GET /public/", http.StripPrefix("/public/", http.FileServer(http.Dir(cfg.PublicDir))))

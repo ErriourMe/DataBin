@@ -1,0 +1,73 @@
+{{ define "paste_stats.tmpl" }}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .id }} stats | {{ .appName }}</title>
+{{ template "head_meta" . }}
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="app-shell flex min-h-full flex-col bg-[#141414] text-gray-200 antialiased">
+<header class="flex flex-shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-[#141414] text-sm">
+    <a href="/" class="group inline-flex">{{ template "brand_logo" . }}</a>
+    <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-sm text-white">{{ .id }}</span>
+        <a href="/{{ .id }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Open paste</a>
+    </div>
+</header>
+<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
+    <h1 class="mb-6 text-xl font-medium text-white">Statistics</h1>
+    <div class="mb-8 rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] p-5">
+        <p class="text-sm text-gray-500">Total views</p>
+        <p class="mt-1 text-3xl font-semibold tabular-nums text-[#00d3a3]">{{ .stats.Views }}</p>
+    </div>
+
+    <section class="mb-8">
+        <h2 class="mb-3 text-sm font-medium text-gray-400">Views by day (UTC)</h2>
+        {{ if .dailyRows }}
+        <div class="space-y-2 rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] p-4">
+            {{ range .dailyRows }}
+            <div class="flex items-center gap-3 text-sm">
+                <span class="w-24 shrink-0 font-mono text-gray-500">{{ .Date }}</span>
+                <div class="h-3 flex-1 overflow-hidden rounded bg-[#141414]">
+                    <div class="h-full rounded bg-[#00d3a3]/80" style="width: {{ .BarWidth }}%"></div>
+                </div>
+                <span class="w-10 shrink-0 text-right tabular-nums text-gray-300">{{ .Count }}</span>
+            </div>
+            {{ end }}
+        </div>
+        {{ else }}
+        <p class="text-sm text-gray-600">No views recorded yet</p>
+        {{ end }}
+    </section>
+
+    {{ if .geoEnabled }}
+    <section>
+        <h2 class="mb-3 text-sm font-medium text-gray-400">Countries</h2>
+        {{ if .stats.Countries }}
+        <div class="overflow-hidden rounded-lg border border-[#2a2a2a]">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-[#1c1c1c] text-gray-500">
+                    <tr><th class="px-4 py-2 font-medium">Country</th><th class="px-4 py-2 font-medium text-right">Views</th></tr>
+                </thead>
+                <tbody class="divide-y divide-[#2a2a2a] bg-[#141414]">
+                    {{ range .stats.Countries }}
+                    <tr>
+                        <td class="px-4 py-2 font-mono text-gray-200">{{ .Code }}</td>
+                        <td class="px-4 py-2 text-right tabular-nums text-gray-300">{{ .Count }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+        {{ else }}
+        <p class="text-sm text-gray-600">No country data yet</p>
+        {{ end }}
+    </section>
+    {{ end }}
+</main>
+{{ template "footer_credit" . }}
+</body>
+</html>
+{{ end }}

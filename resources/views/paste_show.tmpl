@@ -13,7 +13,14 @@
 {{ template "scrollbar_css" . }}
         .hljs { background: transparent !important; padding: 0 !important; }
         #code-block.wrap { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
-        #code-block.nowrap { white-space: pre; }
+        #code-block.nowrap { white-space: pre; overflow-x: auto; max-width: 100%; box-sizing: border-box; }
+        #paste-main { overflow-x: hidden; }
+        #paste-main::-webkit-scrollbar:horizontal,
+        #code-block.nowrap::-webkit-scrollbar:horizontal {
+            height: 0;
+            display: none;
+        }
+        #token-banner-value.token-blurred { filter: blur(6px); user-select: none; }
     </style>
 </head>
 <body class="app-shell h-full bg-[#141414] text-gray-200 antialiased">
@@ -22,12 +29,53 @@
     <div class="flex flex-wrap items-center gap-2">
         <label class="flex cursor-pointer select-none items-center gap-1.5 text-gray-500 hover:text-gray-300">
             <input id="wrap" type="checkbox" class="accent-brand rounded border-gray-600 bg-[#141414] focus:ring-0 focus:ring-offset-0">
-            <span>Word wrap</span>
+            <span class="hidden sm:inline">Word wrap</span>
         </label>
         <span class="ml-2 inline-flex h-7 items-center px-1 font-mono text-sm text-white">{{ .id }}</span>
-        <a href="{{ .rawURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">raw</a>
-        <a href="{{ .downloadURL }}" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Download</a>
-        <button id="copy" type="button" class="inline-flex h-7 items-center rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">Copy URL</button>
+        <button id="stats-open" type="button" title="View paste analytics (token required)" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/>
+            </svg>
+            <span class="hidden sm:inline">Analytics</span>
+        </button>
+        <a href="{{ .rawURL }}" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            </svg>
+            <span>raw</span>
+        </a>
+        <a href="{{ .downloadURL }}" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>
+            </svg>
+            <span class="hidden sm:inline">Download</span>
+        </a>
+        <button id="copy-text" type="button" title="Copy paste text" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            <span class="hidden sm:inline-grid shrink-0 text-left">
+                <span class="col-start-1 row-start-1 invisible" aria-hidden="true">Copy text</span>
+                <span id="copy-text-label" class="col-start-1 row-start-1">Copy text</span>
+            </span>
+        </button>
+        <button id="copy" type="button" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+            <span id="copy-url-label" class="hidden sm:inline-grid shrink-0 text-left">
+                <span class="col-start-1 row-start-1 invisible" aria-hidden="true">Copy URL</span>
+                <span id="copy-url-text" class="col-start-1 row-start-1">Copy URL</span>
+            </span>
+        </button>
+        <button id="fork" type="button" title="Open in editor and save as a new paste" class="inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-sm text-gray-300 bg-[#1c1c1c] hover:bg-[#252525]">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                <circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/>
+                <path d="M6 9v3a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V9"/><path d="M9 18v-3"/>
+            </svg>
+            <span class="hidden sm:inline">Fork &amp; edit</span>
+            <span class="sm:hidden">Fork</span>
+        </button>
         <a href="/" class="btn-accent inline-flex h-7 items-center justify-center gap-1.5 rounded px-2.5 text-sm font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 overflow-hidden" aria-hidden="true">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
@@ -36,18 +84,174 @@
         </a>
     </div>
 </header>
-<main class="app-scroll bg-[#050505]">
+{{ if gt .burnViewsLeft 0 }}
+<div class="flex-shrink-0 bg-amber-950/40 px-3 py-2 text-center text-sm text-amber-200/90">
+    Burn-after-read: {{ .burnViewsLeft }} {{ if .burnUnique }}{{ if eq .burnViewsLeft 1 }}unique view{{ else }}unique views{{ end }}{{ else }}{{ if eq .burnViewsLeft 1 }}view{{ else }}views{{ end }}{{ end }} left. Share the link if someone else should see it
+</div>
+{{ end }}
+{{ if .burnLastView }}
+<div class="flex-shrink-0 bg-amber-950/40 px-3 py-2 text-center text-sm text-amber-200/90">
+    Burn-after-read: this paste was removed after this view. Copy the text now if you still need it
+</div>
+{{ end }}
+<main id="paste-main" class="app-scroll bg-[#050505]">
     <pre id="code-block" class="nowrap m-0 p-3 text-sm leading-relaxed"><code id="code" class="hljs">{{ .content }}</code></pre>
 </main>
+
+<div id="token-banner" class="fixed bottom-0 left-0 right-0 z-40 hidden bg-[#1c1c1c] px-3 py-2 sm:px-4" role="status" aria-live="polite">
+    <div class="mx-auto flex w-full max-w-6xl items-center gap-2">
+        <div class="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+            <span class="inline-flex shrink-0 items-center gap-1">
+                <span class="text-xs font-semibold text-white">Token</span>
+                <span class="group relative inline-flex">
+                    <button type="button" class="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-gray-600 text-[10px] font-medium leading-none text-gray-500 hover:border-gray-500 hover:text-gray-300" aria-describedby="token-banner-help" title="Required to edit or delete this paste. Shown only once">?</button>
+                    <span id="token-banner-help" role="tooltip" class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-52 -translate-x-1/2 rounded border border-[#2a2a2a] bg-[#141414] px-2.5 py-2 text-[11px] font-normal leading-snug text-gray-400 shadow-lg group-hover:block group-focus-within:block">Required to edit or delete this paste. Shown only once</span>
+                </span>
+            </span>
+            <div class="inline-flex min-w-0 items-center gap-0.5">
+                <button type="button" id="token-banner-value" class="token-blurred w-auto min-w-0 max-w-[calc(100vw-6.5rem)] truncate rounded border-0 bg-transparent p-0 text-left font-mono text-sm text-gray-200 outline-none hover:text-gray-100 sm:max-w-lg" title="Show" aria-label="Hidden, click to show"></button>
+                <button type="button" id="token-banner-copy" class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-[#252525] hover:text-gray-200" title="Copy" aria-label="Copy">
+                    <svg data-token-copy-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                    </svg>
+                    <svg data-token-check-icon xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-4 w-4 shrink-0 text-[#00d3a3]" aria-hidden="true">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <button type="button" id="token-banner-dismiss" class="ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-gray-400 transition hover:border-[#2a2a2a] hover:bg-[#252525] hover:text-gray-200" aria-label="Dismiss">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div id="stats-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+    <div class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-[#2a2a2a] bg-[#1c1c1c] shadow-xl">
+        <div class="flex shrink-0 items-center justify-between px-4 py-3">
+            <h2 id="stats-title" class="text-base font-medium text-white">Analytics</h2>
+            <button type="button" id="stats-close" class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-gray-400 transition hover:border-[#2a2a2a] hover:bg-[#252525] hover:text-gray-200" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="h-4 w-4" aria-hidden="true">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div id="stats-gate" class="hidden overflow-y-auto p-4">
+            <p class="mb-4 text-sm text-gray-500">Enter the token from when you created this paste</p>
+            <p id="stats-gate-error" class="mb-3 hidden text-sm text-red-400">Invalid token</p>
+            <form id="stats-gate-form" class="space-y-3">
+                <input id="stats-token-input" name="token" type="password" autocomplete="off" required
+                    class="w-full rounded border border-[#2a2a2a] bg-[#141414] px-3 py-2 text-sm text-gray-200 outline-none focus:border-[#00d3a3]">
+                <button type="submit" class="btn-accent w-full rounded px-3 py-2 text-sm font-medium">Continue</button>
+            </form>
+        </div>
+        <div id="stats-body" class="hidden overflow-y-auto p-4 text-sm">
+            <p class="text-gray-500">Total views</p>
+            <p id="stats-views" class="mt-1 text-3xl font-semibold tabular-nums text-[#00d3a3]">0</p>
+            <h3 class="mb-2 mt-6 text-xs font-medium uppercase tracking-wide text-gray-500">Views by day (UTC)</h3>
+            <div id="stats-daily" class="space-y-2"></div>
+            {{ if .geoEnabled }}
+            <h3 class="mb-2 mt-6 text-xs font-medium uppercase tracking-wide text-gray-500">Countries</h3>
+            <div id="stats-countries"></div>
+            {{ end }}
+        </div>
+        <p id="stats-loading" class="hidden p-6 text-center text-sm text-gray-500">Loading…</p>
+    </div>
+</div>
+
 {{ template "footer_credit" . }}
 {{ template "highlight_fn" . }}
 <script>
 const lang = {{ if .lang }}"{{ .lang }}"{{ else }}""{{ end }};
+const pasteId = "{{ .id }}";
+const geoEnabled = {{ if .geoEnabled }}true{{ else }}false{{ end }};
+/** Plain manage token for this page load only (never persisted after create handoff). */
+let manageTokenSession = '';
+
+function takeTokenFromCreateRedirect() {
+    const showKey = 'databin-show-token-' + pasteId;
+    const tokenKey = 'databin-token-' + pasteId;
+    let plain = '';
+    try {
+        const showOnce = sessionStorage.getItem(showKey) === '1';
+        if (showOnce) plain = sessionStorage.getItem(tokenKey) || '';
+        sessionStorage.removeItem(showKey);
+        sessionStorage.removeItem(tokenKey);
+    } catch (_) {}
+    if (plain) manageTokenSession = plain;
+    return plain;
+}
 const code = document.getElementById('code');
 const codeBlock = document.getElementById('code-block');
+const pasteMain = document.getElementById('paste-main');
 const wrapCheck = document.getElementById('wrap');
+const forkContent = code.textContent;
 
 databinHighlight(code, null, lang);
+
+const createRedirectToken = takeTokenFromCreateRedirect();
+
+(function initTokenBanner() {
+    const banner = document.getElementById('token-banner');
+    const valueEl = document.getElementById('token-banner-value');
+    const copyBtn = document.getElementById('token-banner-copy');
+    const dismissBtn = document.getElementById('token-banner-dismiss');
+    const token = createRedirectToken;
+    if (!token) return;
+
+    function syncBannerLayout() {
+        if (banner.classList.contains('hidden')) {
+            pasteMain.style.paddingBottom = '';
+            return;
+        }
+        pasteMain.style.paddingBottom = banner.offsetHeight + 'px';
+    }
+    function hideBanner() {
+        banner.classList.add('hidden');
+        syncBannerLayout();
+    }
+
+    valueEl.textContent = token;
+    let revealed = false;
+    function setRevealed(on) {
+        revealed = on;
+        valueEl.classList.toggle('token-blurred', !on);
+        valueEl.title = on ? token : 'Show';
+        valueEl.setAttribute('aria-label', on ? 'Hide' : 'Show');
+    }
+    setRevealed(false);
+    valueEl.addEventListener('click', () => setRevealed(!revealed));
+
+    banner.classList.remove('hidden');
+    requestAnimationFrame(syncBannerLayout);
+
+    const copyIcon = copyBtn.querySelector('[data-token-copy-icon]');
+    const checkIcon = copyBtn.querySelector('[data-token-check-icon]');
+    let copyIconTimer = 0;
+    function showCopySuccess() {
+        copyIcon.classList.add('hidden');
+        checkIcon.classList.remove('hidden');
+        copyBtn.setAttribute('title', 'Copied');
+        copyBtn.setAttribute('aria-label', 'Copied');
+        clearTimeout(copyIconTimer);
+        copyIconTimer = setTimeout(() => {
+            checkIcon.classList.add('hidden');
+            copyIcon.classList.remove('hidden');
+            copyBtn.setAttribute('title', 'Copy');
+            copyBtn.setAttribute('aria-label', 'Copy');
+        }, 1500);
+    }
+    copyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(token);
+            showCopySuccess();
+        } catch (_) {}
+    });
+    dismissBtn.addEventListener('click', hideBanner);
+})();
 
 function applyWrap(on) {
     codeBlock.classList.toggle('wrap', on);
@@ -61,14 +265,148 @@ wrapCheck.checked = (function () {
 applyWrap(wrapCheck.checked);
 wrapCheck.addEventListener('change', () => applyWrap(wrapCheck.checked));
 
-document.getElementById('copy').addEventListener('click', async () => {
-    const url = window.location.origin + window.location.pathname;
+document.getElementById('fork').addEventListener('click', () => {
     try {
-        await navigator.clipboard.writeText(url);
-        document.getElementById('copy').textContent = 'Copied';
-        setTimeout(() => { document.getElementById('copy').textContent = 'Copy URL'; }, 1500);
+        sessionStorage.setItem('databin-fork', JSON.stringify({
+            content: forkContent,
+            lang: lang,
+            from: pasteId
+        }));
+    } catch (_) {
+        window.alert('Could not fork: content is too large for browser storage.');
+        return;
+    }
+    window.location.href = '/?fork=1';
+});
+
+document.getElementById('copy-text').addEventListener('click', async () => {
+    const label = document.getElementById('copy-text-label');
+    try {
+        await navigator.clipboard.writeText(forkContent);
+        if (label) label.textContent = 'Copied';
+        setTimeout(() => { if (label) label.textContent = 'Copy text'; }, 1500);
     } catch (_) {}
 });
+
+document.getElementById('copy').addEventListener('click', async () => {
+    const url = window.location.origin + window.location.pathname;
+    const label = document.getElementById('copy-url-text');
+    try {
+        await navigator.clipboard.writeText(url);
+        if (label) label.textContent = 'Copied';
+        setTimeout(() => { if (label) label.textContent = 'Copy URL'; }, 1500);
+    } catch (_) {}
+});
+
+(function statsModal() {
+    const modal = document.getElementById('stats-modal');
+    const gate = document.getElementById('stats-gate');
+    const body = document.getElementById('stats-body');
+    const loading = document.getElementById('stats-loading');
+    const gateError = document.getElementById('stats-gate-error');
+    const tokenInput = document.getElementById('stats-token-input');
+    const gateForm = document.getElementById('stats-gate-form');
+    const statsURL = '/documents/' + encodeURIComponent(pasteId) + '/stats';
+
+    function storedToken() {
+        return manageTokenSession;
+    }
+    function rememberToken(t) {
+        if (t) manageTokenSession = t;
+    }
+
+    function showModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+    }
+    function hideModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+    function showLoading() {
+        loading.classList.remove('hidden');
+        gate.classList.add('hidden');
+        body.classList.add('hidden');
+        gateError.classList.add('hidden');
+    }
+    function showGate(wrong) {
+        loading.classList.add('hidden');
+        body.classList.add('hidden');
+        gate.classList.remove('hidden');
+        gateError.classList.toggle('hidden', !wrong);
+        const t = storedToken();
+        if (t && tokenInput) tokenInput.value = t;
+    }
+    function renderStats(data) {
+        loading.classList.add('hidden');
+        gate.classList.add('hidden');
+        body.classList.remove('hidden');
+        document.getElementById('stats-views').textContent = String(data.views || 0);
+        const dailyEl = document.getElementById('stats-daily');
+        const daily = data.daily || [];
+        if (!daily.length) {
+            dailyEl.innerHTML = '<p class="text-gray-600">No views yet</p>';
+        } else {
+            let max = 0;
+            daily.forEach((d) => { if (d.count > max) max = d.count; });
+            dailyEl.innerHTML = daily.map((d) => {
+                const w = max > 0 ? Math.round((d.count / max) * 100) : 0;
+                return '<div class="flex items-center gap-2"><span class="w-24 shrink-0 font-mono text-xs text-gray-500">' + d.date + '</span>' +
+                    '<div class="h-2 flex-1 overflow-hidden rounded bg-[#141414]"><div class="h-full rounded bg-[#00d3a3]/80" style="width:' + w + '%"></div></div>' +
+                    '<span class="w-8 shrink-0 text-right tabular-nums text-gray-400">' + d.count + '</span></div>';
+            }).join('');
+        }
+        if (geoEnabled) {
+            const countriesEl = document.getElementById('stats-countries');
+            const countries = data.countries || [];
+            if (countriesEl) {
+                if (!countries.length) {
+                    countriesEl.innerHTML = '<p class="text-gray-600">No country data yet</p>';
+                } else {
+                    countriesEl.innerHTML = '<table class="w-full text-left"><thead class="text-gray-500"><tr><th class="pb-1 font-medium">Code</th><th class="pb-1 text-right font-medium">Views</th></tr></thead><tbody class="text-gray-300">' +
+                        countries.map((c) => '<tr><td class="py-1 font-mono">' + c.code + '</td><td class="py-1 text-right tabular-nums">' + c.count + '</td></tr>').join('') +
+                        '</tbody></table>';
+                }
+            }
+        }
+    }
+
+    async function fetchStats(deleteToken) {
+        showLoading();
+        const headers = { Accept: 'application/json' };
+        if (deleteToken) headers['X-Databin-Token'] = deleteToken;
+        const res = await fetch(statsURL, { headers, credentials: 'same-origin' });
+        if (res.status === 401) {
+            showGate(deleteToken !== '');
+            return;
+        }
+        if (!res.ok) {
+            showGate(false);
+            gateError.textContent = 'Could not load statistics';
+            gateError.classList.remove('hidden');
+            return;
+        }
+        const data = await res.json();
+        if (deleteToken) rememberToken(deleteToken);
+        renderStats(data);
+    }
+
+    document.getElementById('stats-open').addEventListener('click', () => {
+        showModal();
+        fetchStats(storedToken());
+    });
+    document.getElementById('stats-close').addEventListener('click', hideModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) hideModal();
+    });
+    gateForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetchStats(tokenInput.value.trim());
+    });
+})();
 </script>
 </body>
 </html>
