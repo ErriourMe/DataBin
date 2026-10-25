@@ -90,3 +90,5 @@ curl -s -H 'X-Databin-Token: TOKEN' http://localhost:3000/documents/PASTE_ID/sta
 | `PASTE_DELETE_MAX_AGE_SECONDS` | `0` | After creation, deletes allowed only within this many seconds; `0` = no limit |
 | `RATE_LIMIT_POST_PER_MINUTE` | `5` | Max `POST /documents` per client IP per minute; `0` = disabled |
 | `GEOIP_DB_PATH` | - | Optional local MaxMind GeoLite2 Country `.mmdb` for country stats |
+
+Behind a reverse proxy (nginx, etc.), pass `X-Forwarded-For` or `X-Real-IP` so rate limits, GeoIP, and burn viewer keys use the client address. The app trusts these headers only when the direct TCP peer is a private or loopback address (typical Docker bridge + host proxy).
