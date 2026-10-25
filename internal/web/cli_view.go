@@ -25,3 +25,10 @@ func writeCLIHighlight(w io.Writer, content, lang string) error {
 	}
 	return quick.Highlight(w, content, lexer, "terminal", "monokai")
 }
+
+func ensureTrailingNewline(w io.Writer, content string) {
+	if content == "" || strings.HasSuffix(content, "\n") {
+		return
+	}
+	_, _ = io.WriteString(w, "\n")
+}

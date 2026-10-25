@@ -101,6 +101,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		if err := writeCLIHighlight(w, read.Content, r.URL.Query().Get("lang")); err != nil {
 			_, _ = io.WriteString(w, read.Content)
 		}
+		ensureTrailingNewline(w, read.Content)
 		return
 	}
 
@@ -132,6 +133,7 @@ func (h *Handler) Raw(w http.ResponseWriter, r *http.Request) {
 	h.setRawCacheHeaders(w, r, id)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	_, _ = w.Write([]byte(read.Content))
+	ensureTrailingNewline(w, read.Content)
 }
 
 func (h *Handler) Download(w http.ResponseWriter, r *http.Request) {
